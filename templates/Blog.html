@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 Seeking Profits - AI based stock information portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .search-section {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 30px;
+      text-align: center;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 15px;
+      max-width: 500px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .search-btn {
+      padding: 12px 25px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .content-section {
+      padding: 30px;
+    }
+
+    .stock-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .metric-card {
+      background: #f8f9ff;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-size: 1.3em;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .positive { color: #22c55e; }
+    .negative { color: #ef4444; }
+
+    .chart-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      border: 1px solid #e1e8ed;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .time-selector {
+      display: flex;
+      gap: 5px;
+      background: #f1f5f9;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .time-btn {
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.2s;
+    }
+
+    .time-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .time-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .chart-container {
+      height: 300px;
+      position: relative;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .news-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f8f9ff;
+      border-radius: 10px;
+    }
+
+    .news-item {
+      padding: 15px;
+      border: 1px solid #e1e8ed;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .news-title {
+      font-weight: 600;
+      color: #333;
+      text-decoration: none;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .news-title:hover {
+      color: #667eea;
+    }
+
+    .news-meta {
+      font-size: 0.8em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .news-description {
+      font-size: 0.9em;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .search-container {
+        flex-direction: column;
+      }
+
+      .search-input {
+        width: 100%;
+      }
+
+      .chart-header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .time-selector {
+        justify-content: center;
+      }
+    }
+
+      /* NAV STYLES (safe to add to existing style block) */
+nav#mainNav {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(4px);
+}
+
+nav#mainNav .nav-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  transition: background 0.18s, color 0.18s, transform 0.12s;
+}
+
+nav#mainNav .nav-link:hover {
+  background: rgba(255,255,255,0.9);
+  color: #764ba2;
+  transform: translateY(-2px);
+}
+
+/* Active link visual — toggled server-side or via JS below */
+nav#mainNav .nav-link.active {
+  background: #fff;
+  color: #764ba2;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>📊📈 Seeking Profits 📈📊</h1>
+    <p>AI based Stock Analysis & Market Intelligence</p>
+  </div>
+<!-- NAVIGATION BAR (paste here, right after <body>) -->
+<nav id="mainNav" aria-label="Main navigation">
+  <a href="/" class="nav-link" id="nav-home">Home</a>
+  <a href="#getstock" class="nav-link" id="nav-getstock">Get Stock Info</a>
+  <a href="/financenews" class="nav-link" id="nav-news">Finance News</a>
+  <a href="/blog" class="nav-link" id="nav-blog">Knowledge</a>
+  <a href="/about" class="nav-link" id="nav-about">About Us</a>
+  <a href="/pricing" class="nav-link" id="nav-pricing">Pricing</a>
+  <a href="/contact" class="nav-link" id="nav-contact">Contact Us</a>
+</nav>
+
+  <div class="header">
+    <h1><i class="fas fa-chart-line"></i> Seeking Profits</h1>
+    <p>AI based Stock Analysis & Market Intelligence</p>
+  </div>
+
+  <div class="blog-container">
+    <h2 style="color:#FFFFF0; text-align:center; margin-bottom:30px;">📚 Latest blog posts </h2>
+
+      <div class="post">
+      <h2><a href="#blog1" style="color:#FFFFF0">Understanding P/E Ratios for Smarter Investing</a></h2>
+      <div class="meta"><i class="fas fa-calendar-alt"></i> Aug 2025 | <i class="fas fa-user"></i> Finance Editor</div>
+      <p>The price-to-earnings ratio is a cornerstone of valuation. But what does it really tell you about a company’s worth — and when should you look beyond it?</p>
+      <a href="#blog1" class="read-more">Read More →</a>
+    </div>
+
+
+    <div class="post">
+      <h2 ><a href="#blog2" style="color:#FFFFF0">How AI is Transforming Stock Market Analysis</a></h2>
+      <div class="meta"><i class="fas fa-calendar-alt"></i> Oct 2025 | <i class="fas fa-user"></i> Admin</div>
+      <p>Artificial intelligence is redefining the way investors make decisions. From sentiment analysis to predictive algorithms, learn how data is reshaping the financial landscape...</p>
+      <a href="#blog2" class="read-more">Read More →</a>
+    </div>
+
+    <div class="post">
+      <h2><a href="#blog3" style="color:#FFFFF0">7 excellent books to help you improve your investing and finance knowledge</a></h2>
+      <div class="meta"><i class="fas fa-calendar-alt"></i> Sep 2025 | <i class="fas fa-user"></i> Market Insights Team</div>
+      <p>Read these 7 books to improve your investing and finance knowledge</p>
+      <a href="#blog3" class="read-more">Read More →</a>
+    </div>
+
+  </div>
+
+<!-- command for link within webpage--
+<a href="#getstock" class="nav-link" id="nav-getstock">Get Stock Info</a>
+-->
+
+
+
+
+
+<h1 style="color:#FFFFF0">Full posts </h1>
+<div class="blog1" id="blog1">
+        <!-- deliberately kept empty -->
+    <p>
+        <h2 style="color:#FFFFF0">📈 Understanding P/E Ratios for Smarter Investing</h2>
+<p>The price-to-earnings ratio is a cornerstone of valuation. But what does it really tell you about a company’s worth — and when should you look beyond it?
+When it comes to evaluating stocks, one of the most common metrics you’ll come across is the Price-to-Earnings (P/E) ratio. It’s a simple yet powerful tool that helps investors gauge how a company’s stock is valued relative to its earnings. Whether you’re a beginner or a seasoned investor, understanding the P/E ratio can help you make more informed investment decisions.
+</p>
+    <p>
+💡 <h3>What Is a P/E Ratio?</h3>
+The P/E ratio measures how much investors are willing to pay for £1 (or $1) of a company’s earnings.
+
+Formula:
+P/E Ratio = Share Price / Earnings Per Share (EPS)
+
+For example:
+If a company’s share price is £100 and its EPS is £5, then its P/E ratio is 20.
+This means investors are willing to pay £20 for every £1 of the company’s earnings.
+
+<h3>🧠 What the P/E Ratio Tells You</h3>
+A high P/E ratio often means:
+Investors expect high future growth, or The stock might be overvalued compared to its current earnings.
+
+A low P/E ratio often suggests:
+The stock could be undervalued, or The company is facing growth or profitability challenges.
+
+In short:
+High P/E = growth expectations
+Low P/E = potential value or risk
+
+<h3>🔍 Types of P/E Ratios</h3>
+
+Trailing P/E (TTM)
+Based on past 12 months’ earnings (actual results).
+Shows how the market values real performance.
+
+Forward P/E
+Based on projected future earnings (analyst forecasts).
+Reflects expected growth and optimism.
+
+<h3>💬 Example:</h3>
+If Company A’s trailing P/E is 15 but forward P/E is 10, it indicates that analysts expect earnings to rise — meaning the stock may become cheaper relative to its earnings in the future.
+    <h3>⚖️ Comparing P/E Ratios Smartly</h3>
+It’s important not to view the P/E ratio in isolation.
+Here’s how to make smarter comparisons:
+Within the same industry: Compare a company’s P/E to its peers (e.g., comparing Tesla to other car makers, not to a bank).
+Against market averages: The FTSE 100 or S&P 500 average P/E gives context.
+With its own history: A company trading below its historical average P/E might signal a buying opportunity — if fundamentals haven’t changed.
+<h3>⚠️ Limitations of the P/E Ratio</h3>
+While useful, the P/E ratio isn’t perfect:
+Earnings can be manipulated through accounting adjustments.
+It doesn’t account for debt levels — two companies with the same P/E can have very different financial risk.
+It ignores growth rate — a company growing earnings rapidly deserves a higher P/E.
+To address this, investors often look at the PEG ratio (Price/Earnings to Growth), which factors in the company’s growth rate.
+<h3>🧩 Final Thoughts</h3>
+The P/E ratio is a great starting point for analysing stocks, but it’s not a standalone indicator. Use it alongside other metrics like growth forecasts, debt ratios, cash flow, and industry trends.
+Understanding what the P/E ratio really means — and how to interpret it within context — can help you spot opportunities, avoid overhyped stocks, and invest with greater confidence.
+<h3>✍️ Key Takeaway</h3>
+The P/E ratio tells you how much the market values a company’s earnings — but smart investors always dig deeper to understand why.
+    </p>
+=======================================================================================================
+    <br>
+</div>
+
+<div class="blog2" id="blog2">
+<br>
+<h2 style="color:#FFFFF0">
+    🤖 How AI is Transforming Stock Market Analysis</h2>
+    <br>
+   <p>
+Artificial Intelligence (AI) is reshaping nearly every industry — and the stock market is no exception. What once required teams of analysts, weeks of research, and manual number crunching can now be achieved in seconds using AI-driven tools. From predicting price movements to managing portfolios, AI is changing how investors approach market analysis and decision-making.
+<h3>💡 The Role of AI in Modern Investing</h3>
+At its core, AI uses data and algorithms to identify patterns, learn from them, and make predictions. In stock market analysis, that means analysing thousands of data points — price history, trading volumes, news sentiment, and even social media chatter — to help investors gain an edge.
+Traditional analysis relied heavily on human interpretation and intuition. Today, AI brings speed, precision, and scalability that humans alone simply can’t match.
+
+<h3>⚙️ Key Areas Where AI Is Making an Impact</h3>
+1. Predictive Analytics
+AI models such as machine learning (ML) algorithms can forecast potential price movements by recognising complex relationships within massive datasets.
+These models continuously learn and improve as new data becomes available, helping investors adapt to changing market conditions.
+Example:
+A neural network trained on ten years of stock data might predict short-term trends in technology stocks with higher accuracy than traditional regression models.
+<br>
+2. Sentiment Analysis
+Market sentiment — how investors feel about a company or the economy — can move prices dramatically.
+AI systems can now scan:
+Financial news articles
+Analyst reports
+Tweets, Reddit posts, and blog mentions
+By processing millions of words, AI assigns a sentiment score (positive, neutral, or negative), giving traders a real-time view of market mood.
+<br>
+3. Algorithmic Trading
+AI has supercharged algorithmic trading, where computers execute trades automatically based on pre-defined strategies.
+AI-driven trading systems:
+React instantly to market changes
+Reduce emotional decision-making
+Optimise trade timing and order size
+Some hedge funds and institutional investors now rely entirely on AI-powered trading bots to manage multi-billion-pound portfolios.
+<br>
+4. Risk Management
+AI helps investors and fund managers assess and mitigate risk more effectively.
+By analysing correlations between assets, volatility patterns, and macroeconomic data, AI can identify hidden risk exposures and suggest portfolio adjustments before markets turn volatile.
+<br>
+5. Portfolio Optimisation
+Robo-advisors and AI portfolio platforms use algorithms to:
+Assess investor goals and risk appetite
+Allocate assets automatically
+Rebalance portfolios as markets shift
+    <br>
+Platforms like Wealthfront, Betterment, and Nutmeg already use such techniques to help everyday investors access sophisticated portfolio strategies once reserved for professionals.
+
+<h3>📊 The Advantages of AI-Driven Market Analysis</h3>
+
+Speed: Analyse massive datasets in real time
+Objectivity: No emotional bias
+Accuracy: Models improve as they learn
+Efficiency: Lower cost compared to manual research
+24/7 monitoring: AI never sleeps — it tracks markets globally
+
+<h3>⚠️ Challenges and Limitations</h3>
+Despite its potential, AI isn’t foolproof:
+Data bias: Poor-quality or incomplete data can lead to bad predictions
+Black box models: Some AI systems are hard to interpret — even for their creators
+Overfitting: Models may perform well historically but fail in real markets
+Regulation: Increased reliance on automated trading raises oversight concerns
+
+Smart investors treat AI as a decision-support tool, not a replacement for human judgment.
+<h3>
+🚀 The Future of AI in Stock Analysis</h3>
+
+As computing power grows and data becomes more accessible, AI will continue evolving.
+Expect to see:
+More real-time predictive analytics
+Personalised AI advisors for retail investors
+Integration with blockchain for transparent trading systems
+Hybrid human-AI investing models that combine intuition with data-driven insight
+
+<h3>🧩 Final Thoughts</h3>
+
+AI is transforming the stock market from a world of gut feelings and spreadsheets into one driven by data, automation, and intelligence.
+While it won’t eliminate uncertainty or risk, it’s giving investors of all sizes unprecedented tools to analyse markets smarter and faster than ever before.
+
+<h3>✍️ Key Takeaway</h3>
+Artificial Intelligence doesn’t replace investors — it empowers them to make faster, smarter, and more informed decisions in an increasingly complex market.
+
+    </p>
+    =======================================================================================================
+</div>
+
+
+  <div class="blog3" id="blog3">
+  <h2 style="color:#FFFFF0">7 Book recommendations to improve your Investing & Finance knowledge</h2>
+     <br>
+
+      <p>
+<h3>1. The Intelligent Investor by Benjamin Graham</h3>
+Covers key concepts like “margin of safety,” distinguishing investing vs speculation.
+Great for building a strong foundation in how to think about stock valuation and risk.
+<br>
+<h3>2. A Random Walk Down WallStreet by Burton G Malkiel</h3>
+Introduces the idea that markets are largely efficient and that buying broad indices often makes sense.
+Very good for beginners who want to understand whether active stock-picking or passive investing is better.
+Helpful to challenge conventional investing wisdom.
+<br>
+<h3>3. The Little Book of Common Sense Investing by John C Bogle</h3>
+A succinct, accessible book advocating for low-cost index fund investing.
+Especially useful if you want to understand long-term investing with minimal fuss.
+Emphasises fees, diversification, and staying the course.
+<br>
+<h3>4. The Psychology of Money by Morgan Housel</h3>
+Focuses on behavioural aspects of finance: how people think about money, risk, wealth.
+Great for understanding the emotional & psychological side of investing (often overlooked).
+Recommended for all levels — not super technical, highly readable.
+<br>
+<h3>5. One Up on WallStreet by Peter Lynch</h3>
+A classic growth-stock investing book: look for opportunities in companies you understand.
+Excellent for moving beyond basics into how to pick stocks (though still with foundational discipline).
+Useful for retail investors who have time and interest to dig into company research.
+<br>
+<h3>6. Investing for Growth by Terry Smith</h3>
+A more modern investing book (UK-focused) emphasising cash generation, quality businesses and long-term thinking.
+Good for investors based in UK / Europe or those wanting a fresh perspective beyond the US-centric classics.
+<br>
+<h3>7. Unknown Market Wizards by Jack D. Schwager</h3>
+Offers insight into traders and investment practitioners with strong results but less notoriety.
+Great if you’re curious about the practical side of investing — dealing with risk, trading, psychology, edge.
+<br>
+<h3>📌 How to Choose Which to Read First</h3>
+Just getting started? → Go for The Little Book of Common Sense Investing or The Psychology of Money.
+Want to understand investing strategy & philosophy? → The Intelligent Investor, One Up on Wall Street.
+Interested in how markets work and passive vs active? → A Random Walk Down Wall Street.
+Want more advanced / deeper dive (cash flows, growth) or more UK-centric? → Investing for Growth.
+Interested in trading / actionable behaviours? → Unknown Market Wizards.
+<br>
+<h3>🛠 Tips to Get the Most Out of These Books</h3>
+Keep a notebook: jot down interesting ideas, terms you didn’t know, concepts you want to apply.
+After reading, apply something: maybe review one of your current investments and ask: “Does this strategy apply here?”
+Pair reading with real-world practise: follow a stock, follow an index, review your portfolio with new lenses.
+Revisit later: Many books are dense with ideas; a second read often reveals more.
+<br>
+</p>
+===================================================================================================
+  </div>
+
+
+</body>
+</html>

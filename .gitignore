@@ -1,0 +1,3 @@
+"venv/"        # Python virtual env
+"node_modules/"   # Node modules
+"__pycache__/" 
