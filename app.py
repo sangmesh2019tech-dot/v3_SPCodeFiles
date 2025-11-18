@@ -232,7 +232,7 @@ def get_stock_data():
         stock = yf.Ticker(ticker)
 
         # Get current price and basic info
-        hist_1d = stock.history(period="1d")
+        hist_1d = yf.download(ticker, period="1d")
         if hist_1d.empty:
             return jsonify({"error": f"No data found for ticker '{ticker}'. Please check the symbol."})
 
@@ -263,7 +263,7 @@ def get_stock_data():
             market_cap_display = "N/A"
 
         # Get default 7-day history
-        history = stock.history(period="7d")["Close"]
+        history = yf.download(ticker, period=yf_period)["Close"]
         history_dict = {str(k.date()): round(v, 2) for k, v in history.items()}
 
         # Enhanced AI analysis
@@ -367,4 +367,5 @@ def health_check():
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "True").lower() == "true"
     port = int(os.getenv("PORT", 5000))
+
     app.run(debug=debug_mode, host="0.0.0.0", port=port)
