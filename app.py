@@ -25,7 +25,7 @@ def fetch_stock_news(query):
 
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        data = response.json()
+        data = yf.download(ticker, period="1d", proxy="https://query1.finance.yahoo.com")
 
         if data.get("status") != "ok":
             return []
@@ -220,7 +220,7 @@ def pricing():
 def get_stock_data():
     """Main endpoint to fetch stock data"""
     try:
-        data = request.json
+        data = yf.download(ticker, period="1d", proxy="https://query1.finance.yahoo.com")
         ticker = data.get("ticker", "").upper().strip()
 
         if not ticker:
@@ -311,7 +311,7 @@ def get_stock_data():
 def get_chart_data():
     """Endpoint to fetch chart data for different time periods"""
     try:
-        data = request.json
+        data = yf.download(ticker, period="1d", proxy="https://query1.finance.yahoo.com")
         ticker = data.get("ticker", "").upper().strip()
         period = data.get("period", "7d")
 
@@ -369,3 +369,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
 
     app.run(debug=debug_mode, host="0.0.0.0", port=port)
+
